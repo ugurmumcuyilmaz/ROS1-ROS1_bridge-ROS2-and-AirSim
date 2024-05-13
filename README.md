@@ -25,3 +25,7 @@ First, we need to open AirSim. You can open its interface by entering the necess
 Feel free to refer to the documentation for guidance if you get stuck. --> https://docs.ros.org/
 
 I'll also provide instructions on how to set up the system from scratch with code soon. For now, that's it.
+
+You can see how it works in the video.
+
+https://www.youtube.com/watch?v=667v1vihbQg
