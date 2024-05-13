@@ -1,7 +1,7 @@
 # ROS1-ROS1_bridge-ROS2-and-AirSim
 # ugurmumcuyilmaz.com
 
-We are controlling the vehicle in the simulation environment using ROS1_bridge and AirSim.
+Controlling Vehicles with ROS1_bridge and ROS2 on Ubuntu 20.04 - AirSim Simulation Environment.
 
 First, we start with 3 files. The names of the files in the order we'll run them are:
 
