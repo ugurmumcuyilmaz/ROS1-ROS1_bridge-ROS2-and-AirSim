@@ -1,71 +1,54 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-import sys
-import termios
-import tty
+from pynput import keyboard
 
-class UserInputPublisher(Node):
+class DriverInputNode(Node):
     def __init__(self):
-        super().__init__('user_input_publisher')
-        self.publisher_ = self.create_publisher(String, 'user_input', 10)
-        self.throttle = 0
-        self.steering = 0
-        self.gear = 1
+        super().__init__('driver_input_node')
+        self.publisher_ = self.create_publisher(String, 'driver_input', 10)
+        self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
+        self.listener.start()
 
-    def get_user_input(self):
+    def on_press(self, key):
         msg = String()
-        old_settings = termios.tcgetattr(sys.stdin)
         try:
-            tty.setcbreak(sys.stdin.fileno())
-            while True:
-                key = sys.stdin.read(1)
-                if key == 'w':
-                    self.throttle += 0.1
-                    msg.data = "FORWARD"
-                elif key == 's':
-                    self.throttle -= 0.1
-                    msg.data = "BACKWARD"
-                elif key == 'd':
-                    self.steering = min(self.steering + 0.1, 1.0)  # rechts
-                    msg.data = "RIGHT"
-                elif key == 'a':
-                    self.steering = max(self.steering - 0.1, -1.0)  # links
-                    msg.data = "LEFT"
-                elif key == ' ':  # stop
-                    self.throttle = 0
-                    msg.data = "STOP"
-                elif key == 'q':  # q exit
-                    msg.data = "QUIT"
-                    self.publisher_.publish(msg)
-                    return
-                else:
-                    self.throttle = max(0, self.throttle - 0.1)
-                    msg.data = "STOP"
+            if key.char == 'w':
+                msg.data = 'up'
+            elif key.char == 's':
+                msg.data = 'down'
+            elif key.char == 'a':
+                msg.data = 'left'
+            elif key.char == 'd':
+                msg.data = 'right'
+        except AttributeError:
+            if key == keyboard.Key.space:
+                msg.data = 'space'
+        
+        self.publisher_.publish(msg)
 
-                self.throttle = min(1.0, self.throttle)
+    def on_release(self, key):
+        msg = String()
+        try:
+            if key.char == 'w':
+                msg.data = 'release_up'
+            elif key.char == 's':
+                msg.data = 'release_down'
+            elif key.char == 'a':
+                msg.data = 'release_left'
+            elif key.char == 'd':
+                msg.data = 'release_right'
+        except AttributeError:
+            pass
 
-                # reverse
-                if self.throttle < 0 and self.gear != -1:
-                    self.gear = -1
-                elif self.throttle >= 0 and self.gear == -1:
-                    self.gear = 1
-
-                car_msg = f"Throttle: {self.throttle}, Steering: {self.steering}, Gear: {self.gear}"
-                msg.data = car_msg
-                self.publisher_.publish(msg)
-        finally:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-
+        self.publisher_.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)
-    user_input_publisher = UserInputPublisher()
-    user_input_publisher.get_user_input()
-    rclpy.spin(user_input_publisher)
-    user_input_publisher.destroy_node()
+    node = DriverInputNode()
+    rclpy.spin(node)
+    node.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
-
